@@ -1,8 +1,10 @@
-﻿namespace Mango.Web.Utility
+﻿using static System.Net.WebRequestMethods;
+
+namespace Mango.Web.Utility
 {
     public class SD
     {
-        public static string CouponAPIBase {  get; set; }
+        public static string CouponAPIBase = "https://localhost:7001";
         public enum ApiType
         {
             GET,
