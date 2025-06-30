@@ -1,5 +1,9 @@
  using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Mongo.Services.AuthAPI.Models;
+using Mongo.Services.AuthAPI.Models.DTO;
+using Mongo.Services.AuthAPI.Service;
+using Mongo.Services.AuthAPI.Service.IService;
 using Mongo.Servives.AuthAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,11 +14,14 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContext<ApplicationDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-builder.Services.AddIdentity<IdentityUser,IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("ApiSettings:JwtOptions"));
+builder.Services.AddScoped<IAuthService,AuthService>();
+builder.Services.AddIdentity<ApplicationUser,IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders() ;
 
 var app = builder.Build();
