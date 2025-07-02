@@ -47,5 +47,18 @@ public class AuthAPIController : Controller
         _response.Result =  loginReposonse;
         return Ok(_response);
     }
+    [HttpPost("assignRole")]
+    public async Task<IActionResult> Login([FromBody] RegistrationRequestDto model)
+    {
+        var assignSuccessful = await _authService.AssignRole(model.Email,model.Role);
+        if (!assignSuccessful)
+        {
+            _response.Message = "Error Encountered";
+            _response.IsSuccess = false;
+            return BadRequest(_response);
+        }
+        _response.Result =  assignSuccessful;
+        return Ok(_response);
+    }
   
 }

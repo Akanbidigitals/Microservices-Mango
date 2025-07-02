@@ -12,12 +12,14 @@ public class AuthService : IAuthService
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IJwtTokenGenerator  _jwtTokenGenerator;
 
-    public AuthService(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+    public AuthService(ApplicationDbContext dbContext, UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager,IJwtTokenGenerator jwtTokenGenerator)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _roleManager = roleManager;
+        _jwtTokenGenerator = jwtTokenGenerator;
     }
     public async Task<string> Register(RegistrationRequestDto registerRequestDto)
     {
@@ -68,7 +70,7 @@ public class AuthService : IAuthService
             };
         }
         //if user was found , we generate jwt token
-        
+        var token = _jwtTokenGenerator.GenerateToken(user);
         UserDTO userdto = new()
         {
             Email = user.Email,
@@ -80,8 +82,24 @@ public class AuthService : IAuthService
         LoginReposonseDto loginReposonseDto = new()
         {
             User = userdto,
-            Token = ""
+            Token = token
         };
         return loginReposonseDto;
+    }
+
+    public async Task<bool> AssignRole(string email, string roleName)
+    {
+        var user =  _dbContext.ApplicationUsers.FirstOrDefault(x => x.Email.ToLower()  == email.ToLower());
+        if (user != null)
+        {
+            if (!_roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult())
+            {
+                _roleManager.CreateAsync(new IdentityRole(roleName)).GetAwaiter().GetResult();
+            }
+            await _userManager.AddToRoleAsync(user, roleName);
+            return true;
+        }
+
+        return false;
     }
 }
