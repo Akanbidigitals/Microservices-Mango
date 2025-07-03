@@ -8,7 +8,7 @@ using Mongo.Servives.AuthAPI.Data;
 
 namespace Mongo.Services.AuthAPI.Controllers;
 
-[Route("api/Auth")]
+[Route("api/auth")]
 [ApiController]
 public class AuthAPIController : Controller
 {
