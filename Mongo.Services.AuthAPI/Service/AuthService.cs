@@ -21,8 +21,9 @@ public class AuthService : IAuthService
         _roleManager = roleManager;
         _jwtTokenGenerator = jwtTokenGenerator;
     }
-    public async Task<string> Register(RegistrationRequestDto registerRequestDto)
+    public async Task<ResponseDto > Register(RegistrationRequestDto registerRequestDto)
     {
+        var response = new ResponseDto();
         ApplicationUser user = new()
         {
             Email = registerRequestDto.Email,
@@ -36,7 +37,7 @@ public class AuthService : IAuthService
             var result = await _userManager.CreateAsync(user, registerRequestDto.Password);
             if (result.Succeeded)
             {
-                var userToReturn = _dbContext.ApplicationUsers.First(x => x.Email == registerRequestDto.Email);
+                var userToReturn = _dbContext.ApplicationUsers.First(x => x.UserName == registerRequestDto.Email);
                 UserDTO userDto = new()
                 {
                     Name = userToReturn.Name,
@@ -45,22 +46,31 @@ public class AuthService : IAuthService
                      ID = userToReturn.Id,
 
                 };
-                return $"{userDto.Name} registered successfully";
+                response.Result = userDto;
+                response.IsSuccess = true;
+                response.Message = "User created successfully";
+
             }
-            return result.Errors.First().Description;
+            else
+            {
+                response.IsSuccess = false;
+                response.Message = result.Errors.First().Description;
+            }
+            
         }
         catch (Exception ex)
         {
-            
+            response.IsSuccess = false;
+            response.Message = ex.Message;
         }
 
-        return "Error Encountered";
+        return response;
     }
 
     public async Task<LoginReposonseDto> Login(LoginRequestDto loginRequestDto)
     {
         var user =  _dbContext.ApplicationUsers.FirstOrDefault(x => x.UserName.ToLower()  == loginRequestDto.UserName.ToLower());
-        bool isValid = await _userManager.CheckPasswordAsync(user, loginRequestDto.Password);
+        bool isValid = await _userManager.CheckPasswordAsync(user!, loginRequestDto.Password);
         if (user == null || isValid == false)
         {
             return new LoginReposonseDto()
@@ -102,4 +112,37 @@ public class AuthService : IAuthService
 
         return false;
     }
+    
+    public async Task<string> RemoveUserFromRoleAsync(string email, string roleName)
+    {
+        // Find user by email
+        var user = await _userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            return $"User with email '{email}' not found.";
+        }
+
+        // Check if role exists
+        if (!await _roleManager.RoleExistsAsync(roleName))
+        {
+            return $"Role '{roleName}' does not exist.";
+        }
+
+        // Check if user is in the role
+        if (!await _userManager.IsInRoleAsync(user, roleName))
+        {
+            return $"User is not in role '{roleName}'.";
+        }
+
+        // Remove user from role
+        var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+        if (result.Succeeded)
+        {
+            return $"User '{email}' has been removed from role '{roleName}'.";
+        }
+
+        // Return any errors
+        return string.Join("; ", result.Errors.Select(e => e.Description));
+    }
 }
+

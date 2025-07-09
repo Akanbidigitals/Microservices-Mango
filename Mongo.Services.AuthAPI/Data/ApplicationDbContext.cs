@@ -10,7 +10,7 @@ namespace Mongo.Servives.AuthAPI.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) // Deed data to the coupon database
+        protected override void OnModelCreating(ModelBuilder modelBuilder) // seed data to the coupon database
         {
             base.OnModelCreating(modelBuilder);  
         }
